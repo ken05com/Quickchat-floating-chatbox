@@ -1,0 +1,2304 @@
+/* ==========================================================================
+   Lakbayon — floating travel companion
+   Design language: warm white canvas, muted slate blue, charcoal type,
+   soft lavender section fills, rounded containers, subtle shadows,
+   oversized editorial headings, minimal line icons.
+
+   NOTE ON !important
+   This stylesheet is injected into every page via a content script, so the
+   host page's own CSS competes with it — and author `!important` rules beat
+   normal declarations. Every widget rule therefore states `!important`
+   explicitly. Where both sides are important, specificity decides, and our
+   `#fc-root .fc-*` selectors (id + class) outrank typical host selectors
+   like `button`, `div` or `*`.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Design tokens
+   -------------------------------------------------------------------------- */
+#fc-root {
+  --fc-canvas: #fbf9f6;
+  --fc-surface: #ffffff;
+  --fc-lavender: #f2f0f7;
+  --fc-lavender-2: #e8e5f0;
+  --fc-slate: #5b7396;
+  --fc-slate-deep: #3f5473;
+  --fc-slate-soft: #93a6c2;
+  --fc-slate-wash: #eef2f7;
+  /* Accent used for text and icons sitting on canvas/surface fills. Kept
+     separate from --fc-slate-deep, which is also a gradient stop that must
+     stay dark enough for white icons in both themes. */
+  --fc-accent: #3f5473;
+  --fc-scrim: rgba(251, 249, 246, 0.94);
+  --fc-toast-bg: #23252b;
+  --fc-toast-fg: #ffffff;
+  --fc-ink: #23252b;
+  --fc-ink-2: #4a4f5c;
+  --fc-muted: #7e8494;
+  --fc-line: #e5e2ea;
+  --fc-line-strong: #d3cedd;
+  --fc-shadow-sm: 0 1px 2px rgba(35, 37, 43, 0.05), 0 2px 6px rgba(35, 37, 43, 0.04);
+  --fc-shadow-md: 0 4px 12px rgba(35, 37, 43, 0.07), 0 12px 28px rgba(35, 37, 43, 0.07);
+  --fc-shadow-lg: 0 10px 24px rgba(35, 37, 43, 0.1), 0 28px 60px rgba(63, 84, 115, 0.16);
+  --fc-radius-lg: 22px;
+  --fc-radius-md: 14px;
+  --fc-radius-sm: 10px;
+  --fc-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --fc-dur: 0.28s;
+  --fc-panel-w: 400px;
+  --fc-panel-h: 580px;
+}
+
+/* --------------------------------------------------------------------------
+   Isolation reset
+   `all: initial` must come first (it is not important, so it cannot fight the
+   important declarations that follow).
+   -------------------------------------------------------------------------- */
+#fc-root {
+  all: initial;
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 2147483647 !important;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  color: var(--fc-ink) !important;
+  text-align: left !important;
+  direction: ltr !important;
+}
+
+#fc-root *,
+#fc-root *::before,
+#fc-root *::after {
+  box-sizing: border-box !important;
+}
+
+#fc-root button,
+#fc-root input {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 solid transparent !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  font: inherit !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: inherit !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  text-decoration: none !important;
+  text-align: inherit !important;
+  white-space: normal !important;
+  outline: none !important;
+  cursor: pointer !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  opacity: 1 !important;
+  float: none !important;
+}
+
+#fc-root svg {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  flex: none !important;
+  overflow: visible !important;
+}
+
+#fc-root [hidden],
+#fc-root [hidden][hidden] {
+  display: none !important;
+}
+
+/* Shared type styles ------------------------------------------------------- */
+#fc-root .fc-eyebrow {
+  margin: 0 0 10px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-display {
+  margin: 0 !important;
+  font-size: 30px !important;
+  line-height: 1.06 !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.03em !important;
+  color: var(--fc-ink) !important;
+}
+
+#fc-root .fc-display--sm {
+  font-size: 26px !important;
+}
+
+#fc-root .fc-lede {
+  margin: 12px 0 0 !important;
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+  color: var(--fc-muted) !important;
+  max-width: 30ch !important;
+}
+
+/* --------------------------------------------------------------------------
+   Floating action button
+   -------------------------------------------------------------------------- */
+#fc-root .fc-fab {
+  position: relative !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(145deg, var(--fc-slate) 0%, var(--fc-slate-deep) 100%) !important;
+  box-shadow: var(--fc-shadow-md) !important;
+  transition: transform var(--fc-dur) var(--fc-ease), box-shadow var(--fc-dur) var(--fc-ease),
+    opacity 0.2s var(--fc-ease) !important;
+}
+
+#fc-root .fc-fab svg {
+  width: 24px !important;
+  height: 24px !important;
+  color: #fff !important;
+}
+
+#fc-root .fc-fab::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: -4px !important;
+  border: 1px solid rgba(91, 115, 150, 0.28) !important;
+  border-radius: 50% !important;
+  opacity: 0 !important;
+  transition: opacity var(--fc-dur) var(--fc-ease) !important;
+}
+
+#fc-root .fc-fab:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--fc-shadow-lg) !important;
+}
+
+#fc-root .fc-fab:hover::after {
+  opacity: 1 !important;
+}
+
+#fc-root .fc-fab:active {
+  transform: translateY(0) scale(0.96) !important;
+}
+
+#fc-root .fc-fab:focus-visible {
+  outline: 2px solid var(--fc-slate) !important;
+  outline-offset: 4px !important;
+}
+
+#fc-root .fc-fab.is-hidden {
+  opacity: 0 !important;
+  transform: scale(0.8) !important;
+  pointer-events: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   Panel shell
+   -------------------------------------------------------------------------- */
+#fc-root .fc-panel {
+  position: absolute !important;
+  right: 0 !important;
+  bottom: 72px !important;
+  z-index: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: var(--fc-panel-w) !important;
+  height: var(--fc-panel-h) !important;
+  max-height: calc(100vh - 130px) !important;
+  overflow: hidden !important;
+  background: var(--fc-canvas) !important;
+  border: 1px solid var(--fc-line) !important;
+  border-radius: var(--fc-radius-lg) !important;
+  box-shadow: var(--fc-shadow-lg) !important;
+  opacity: 0 !important;
+  transform: translateY(14px) scale(0.96) !important;
+  transform-origin: bottom right !important;
+  pointer-events: none !important;
+  transition: opacity var(--fc-dur) var(--fc-ease), transform var(--fc-dur) var(--fc-ease) !important;
+}
+
+#fc-root .fc-panel.is-open {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+  pointer-events: auto !important;
+}
+
+/* Header ------------------------------------------------------------------- */
+#fc-root .fc-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  flex: none !important;
+  padding: 16px 16px 14px !important;
+  background: linear-gradient(180deg, var(--fc-lavender) 0%, var(--fc-canvas) 100%) !important;
+  border-bottom: 1px solid var(--fc-line) !important;
+}
+
+#fc-root .fc-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 11px !important;
+  min-width: 0 !important;
+}
+
+#fc-root .fc-mark {
+  display: grid !important;
+  place-items: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  flex: none !important;
+  padding: 8px !important;
+  border-radius: 11px !important;
+  background: linear-gradient(145deg, var(--fc-slate) 0%, var(--fc-slate-deep) 100%) !important;
+  box-shadow: var(--fc-shadow-sm) !important;
+}
+
+#fc-root .fc-mark svg {
+  color: #fff !important;
+}
+
+#fc-root .fc-brand-text {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+}
+
+#fc-root .fc-brand-name {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--fc-ink) !important;
+}
+
+#fc-root .fc-brand-sub {
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+  color: var(--fc-muted) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#fc-root .fc-head-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex: none !important;
+}
+
+#fc-root .fc-live {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 5px 10px !important;
+  border-radius: 999px !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: var(--fc-ink-2) !important;
+  white-space: nowrap !important;
+}
+
+#fc-root .fc-live-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: #5a9c7a !important;
+  box-shadow: 0 0 0 3px rgba(90, 156, 122, 0.16) !important;
+}
+
+#fc-root .fc-icon-btn {
+  display: grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  flex: none !important;
+  padding: 9px !important;
+  border-radius: var(--fc-radius-sm) !important;
+  color: var(--fc-muted) !important;
+  transition: background 0.18s var(--fc-ease), color 0.18s var(--fc-ease) !important;
+}
+
+#fc-root .fc-icon-btn:hover {
+  background: var(--fc-lavender-2) !important;
+  color: var(--fc-ink) !important;
+}
+
+#fc-root .fc-icon-btn:focus-visible {
+  outline: 2px solid var(--fc-slate) !important;
+  outline-offset: 2px !important;
+}
+
+/* Tabs --------------------------------------------------------------------- */
+#fc-root .fc-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  flex: none !important;
+  padding: 8px !important;
+  background: var(--fc-surface) !important;
+  border-bottom: 1px solid var(--fc-line) !important;
+}
+
+#fc-root .fc-tab {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 5px !important;
+  padding: 9px 4px 10px !important;
+  border-radius: var(--fc-radius-sm) !important;
+  color: var(--fc-muted) !important;
+  transition: background 0.2s var(--fc-ease), color 0.2s var(--fc-ease) !important;
+}
+
+#fc-root .fc-tab svg {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+#fc-root .fc-tab-label {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+  color: inherit !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#fc-root .fc-tab-pip {
+  position: absolute !important;
+  bottom: 4px !important;
+  left: 50% !important;
+  width: 14px !important;
+  height: 2px !important;
+  border-radius: 2px !important;
+  background: var(--fc-slate) !important;
+  opacity: 0 !important;
+  transform: translateX(-50%) scaleX(0.4) !important;
+  transition: opacity 0.2s var(--fc-ease), transform 0.2s var(--fc-ease) !important;
+}
+
+#fc-root .fc-tab:hover {
+  background: var(--fc-lavender) !important;
+  color: var(--fc-ink-2) !important;
+}
+
+#fc-root .fc-tab.is-active {
+  background: var(--fc-slate-wash) !important;
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-tab.is-active .fc-tab-label {
+  font-weight: 600 !important;
+}
+
+#fc-root .fc-tab.is-active .fc-tab-pip {
+  opacity: 1 !important;
+  transform: translateX(-50%) scaleX(1) !important;
+}
+
+#fc-root .fc-tab:focus-visible {
+  outline: 2px solid var(--fc-slate) !important;
+  outline-offset: -2px !important;
+}
+
+/* Body / views ------------------------------------------------------------- */
+#fc-root .fc-body {
+  position: relative !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+#fc-root .fc-view {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+/* Inactive tab panels. The JS also writes an inline `display` with !important,
+   which is the authoritative guarantee; this is a defence-in-depth backstop at
+   higher specificity than the `.fc-view` rule above. */
+#fc-root .fc-body .fc-view[hidden] {
+  display: none !important;
+}
+
+#fc-root .fc-view:focus,
+#fc-root .fc-view:focus-visible {
+  outline: none !important;
+}
+
+#fc-root .fc-view-scroll {
+  width: 100% !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  padding: 22px 18px 24px !important;
+  background: linear-gradient(180deg, var(--fc-canvas) 0%, var(--fc-lavender) 100%) !important;
+}
+
+#fc-root .fc-view-head {
+  margin-bottom: 20px !important;
+}
+
+#fc-root .fc-list-wrap {
+  display: block !important;
+}
+
+/* Scrollbars --------------------------------------------------------------- */
+#fc-root .fc-view-scroll::-webkit-scrollbar,
+#fc-root .fc-messages::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+#fc-root .fc-view-scroll::-webkit-scrollbar-thumb,
+#fc-root .fc-messages::-webkit-scrollbar-thumb {
+  background: var(--fc-line-strong) !important;
+  border: 2px solid transparent !important;
+  border-radius: 99px !important;
+  background-clip: content-box !important;
+}
+
+#fc-root .fc-view-scroll,
+#fc-root .fc-messages {
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--fc-line-strong) transparent !important;
+}
+
+/* --------------------------------------------------------------------------
+   Chat view
+   -------------------------------------------------------------------------- */
+#fc-root .fc-messages {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  padding: 20px 18px !important;
+  background: linear-gradient(180deg, var(--fc-lavender) 0%, var(--fc-canvas) 42%) !important;
+}
+
+#fc-root .fc-welcome {
+  margin: auto 0 !important;
+  padding: 8px 0 !important;
+}
+
+#fc-root .fc-welcome-mark {
+  display: grid !important;
+  place-items: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 11px !important;
+  margin-bottom: 18px !important;
+  border-radius: 14px !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line) !important;
+  box-shadow: var(--fc-shadow-sm) !important;
+}
+
+#fc-root .fc-welcome-mark svg {
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
+  margin-top: 20px !important;
+}
+
+#fc-root .fc-chip {
+  padding: 8px 13px !important;
+  border-radius: 999px !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line) !important;
+  box-shadow: var(--fc-shadow-sm) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: var(--fc-ink-2) !important;
+  white-space: nowrap !important;
+  transition: border-color 0.18s var(--fc-ease), color 0.18s var(--fc-ease),
+    transform 0.18s var(--fc-ease) !important;
+}
+
+#fc-root .fc-chip:hover {
+  border-color: var(--fc-slate-soft) !important;
+  color: var(--fc-accent) !important;
+  transform: translateY(-1px) !important;
+}
+
+#fc-root .fc-chip:focus-visible {
+  outline: 2px solid var(--fc-slate) !important;
+  outline-offset: 2px !important;
+}
+
+#fc-root .fc-msg {
+  max-width: 82% !important;
+  padding: 11px 14px !important;
+  border-radius: 16px !important;
+  font-size: 13.5px !important;
+  line-height: 1.5 !important;
+  animation: fc-msg-in 0.26s var(--fc-ease) both !important;
+}
+
+@keyframes fc-msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+#fc-root .fc-msg--user {
+  align-self: flex-end !important;
+  background: linear-gradient(145deg, var(--fc-slate) 0%, var(--fc-slate-deep) 100%) !important;
+  color: #fff !important;
+  border-bottom-right-radius: 6px !important;
+}
+
+#fc-root .fc-msg--bot {
+  align-self: flex-start !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line) !important;
+  color: var(--fc-ink-2) !important;
+  border-bottom-left-radius: 6px !important;
+}
+
+#fc-root .fc-msg.is-typing {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 14px !important;
+}
+
+#fc-root .fc-msg.is-typing span {
+  width: 5px !important;
+  height: 5px !important;
+  border-radius: 50% !important;
+  background: var(--fc-slate-soft) !important;
+  animation: fc-dot 1.1s infinite ease-in-out !important;
+}
+
+#fc-root .fc-msg.is-typing span:nth-child(2) {
+  animation-delay: 0.15s !important;
+}
+
+#fc-root .fc-msg.is-typing span:nth-child(3) {
+  animation-delay: 0.3s !important;
+}
+
+@keyframes fc-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* Composer ----------------------------------------------------------------- */
+#fc-root .fc-composer {
+  flex: none !important;
+  padding: 12px 14px 14px !important;
+  background: var(--fc-surface) !important;
+  border-top: 1px solid var(--fc-line) !important;
+}
+
+#fc-root .fc-input-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 6px 6px 14px !important;
+  border-radius: 999px !important;
+  background: var(--fc-canvas) !important;
+  border: 1px solid var(--fc-line) !important;
+  transition: border-color 0.2s var(--fc-ease), box-shadow 0.2s var(--fc-ease) !important;
+}
+
+#fc-root .fc-input-row:focus-within {
+  border-color: var(--fc-slate-soft) !important;
+  box-shadow: 0 0 0 3px rgba(91, 115, 150, 0.13) !important;
+}
+
+#fc-root .fc-input {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  font-size: 13.5px !important;
+  line-height: 1.4 !important;
+  color: var(--fc-ink) !important;
+  cursor: text !important;
+}
+
+#fc-root .fc-input::placeholder {
+  color: var(--fc-muted) !important;
+  opacity: 1 !important;
+}
+
+#fc-root .fc-input:focus {
+  outline: none !important;
+}
+
+#fc-root .fc-send {
+  display: grid !important;
+  place-items: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  flex: none !important;
+  padding: 9px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(145deg, var(--fc-slate) 0%, var(--fc-slate-deep) 100%) !important;
+  color: #fff !important;
+  transition: transform 0.18s var(--fc-ease), filter 0.18s var(--fc-ease) !important;
+}
+
+#fc-root .fc-send:hover {
+  filter: brightness(1.08) !important;
+  transform: scale(1.05) !important;
+}
+
+#fc-root .fc-send:active {
+  transform: scale(0.94) !important;
+}
+
+#fc-root .fc-send:focus-visible {
+  outline: 2px solid var(--fc-slate) !important;
+  outline-offset: 2px !important;
+}
+
+#fc-root .fc-hint {
+  margin: 9px 2px 0 !important;
+  font-size: 10.5px !important;
+  line-height: 1.4 !important;
+  color: var(--fc-muted) !important;
+  text-align: center !important;
+}
+
+/* --------------------------------------------------------------------------
+   Film grain
+   A static turbulence tile laid over the canvas colour. Gives the flat panel
+   an editorial, printed-paper texture for one cached data URI of cost.
+   -------------------------------------------------------------------------- */
+#fc-root .fc-panel {
+  background-color: var(--fc-canvas) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E") !important;
+  background-repeat: repeat !important;
+  background-size: 160px 160px !important;
+}
+
+/* --------------------------------------------------------------------------
+   Ambient aurora
+   Three slow-drifting radial blobs. Transform-only so it stays on the
+   compositor, and it only animates while the panel is actually open — this
+   widget is injected into every page, so idle animation is not acceptable.
+   -------------------------------------------------------------------------- */
+#fc-root .fc-aurora {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  overflow: hidden !important;
+  border-radius: var(--fc-radius-lg) !important;
+  pointer-events: none !important;
+}
+
+#fc-root .fc-aurora-blob {
+  position: absolute !important;
+  width: 220px !important;
+  height: 220px !important;
+  border-radius: 50% !important;
+  filter: blur(38px) !important;
+  /* Visibility is driven purely by the cascade, never by a transition. A
+     transition here leaves the layer permanently invisible in any context that
+     pauses animations (occluded tabs, reduced-motion tooling). The panel's own
+     open transition already carries the fade. */
+  opacity: 0 !important;
+  will-change: transform !important;
+}
+
+#fc-root .fc-aurora-blob--a {
+  top: -110px !important;
+  left: -70px !important;
+  background: radial-gradient(circle, rgba(147, 166, 194, 0.55) 0%, rgba(147, 166, 194, 0) 70%) !important;
+}
+
+#fc-root .fc-aurora-blob--b {
+  top: 60px !important;
+  right: -120px !important;
+  background: radial-gradient(circle, rgba(91, 115, 150, 0.42) 0%, rgba(91, 115, 150, 0) 70%) !important;
+}
+
+#fc-root .fc-aurora-blob--c {
+  bottom: -130px !important;
+  left: 40px !important;
+  background: radial-gradient(circle, rgba(200, 190, 214, 0.5) 0%, rgba(200, 190, 214, 0) 70%) !important;
+}
+
+#fc-root.is-dark .fc-aurora-blob--a {
+  background: radial-gradient(circle, rgba(120, 145, 180, 0.4) 0%, rgba(120, 145, 180, 0) 70%) !important;
+}
+
+#fc-root.is-dark .fc-aurora-blob--c {
+  background: radial-gradient(circle, rgba(96, 84, 118, 0.42) 0%, rgba(96, 84, 118, 0) 70%) !important;
+}
+
+/* Only alive while the panel is open. */
+#fc-root .fc-panel.is-open .fc-aurora-blob {
+  opacity: 1 !important;
+  animation: fc-drift 22s ease-in-out infinite alternate !important;
+}
+
+#fc-root .fc-panel.is-open .fc-aurora-blob--b {
+  animation-duration: 27s !important;
+  animation-delay: -6s !important;
+}
+
+#fc-root .fc-panel.is-open .fc-aurora-blob--c {
+  animation-duration: 31s !important;
+  animation-delay: -12s !important;
+}
+
+@keyframes fc-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(26px, 34px, 0) scale(1.18);
+  }
+}
+
+/* Content sits above the aurora. */
+#fc-root .fc-head,
+#fc-root .fc-tabs,
+#fc-root .fc-body {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Generative tile artwork
+   -------------------------------------------------------------------------- */
+#fc-root .fc-art {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  transition: transform 0.5s var(--fc-ease) !important;
+}
+
+#fc-root .fc-tile:hover .fc-art {
+  transform: scale(1.045) !important;
+}
+
+/* Older browsers ignore <object-fit> on inline SVG; the viewBox slice covers it,
+   this just stops any letterboxing on very wide tiles. */
+#fc-root .fc-tile--reef .fc-art {
+  filter: saturate(1.02) !important;
+}
+
+/* Staggered list entrance, driven by a per-row index set from JS. */
+#fc-root .fc-rows > li {
+  animation: fc-row-in 0.32s var(--fc-ease) both !important;
+  animation-delay: calc(var(--fc-i, 0) * 28ms) !important;
+}
+
+@keyframes fc-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Lakbayon Run
+   -------------------------------------------------------------------------- */
+#fc-root .fc-game {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  background: var(--fc-canvas) !important;
+}
+
+#fc-root .fc-canvas {
+  display: block !important;
+  width: 100% !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  touch-action: manipulation !important;
+  cursor: pointer !important;
+}
+
+#fc-root .fc-game-hud {
+  position: absolute !important;
+  top: 10px !important;
+  left: 12px !important;
+  right: 12px !important;
+  z-index: 2 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  pointer-events: none !important;
+}
+
+#fc-root .fc-hud-score {
+  padding: 3px 9px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(4px) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  font-variant-numeric: tabular-nums !important;
+  color: var(--fc-ink) !important;
+}
+
+#fc-root .fc-hud-best {
+  padding: 3px 9px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.55) !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  color: var(--fc-ink-2) !important;
+}
+
+#fc-root.is-dark .fc-hud-score,
+#fc-root.is-dark .fc-hud-best {
+  background: rgba(22, 24, 28, 0.7) !important;
+  color: var(--fc-ink) !important;
+}
+
+#fc-root .fc-game-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 3 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 20px !important;
+  text-align: center !important;
+  background: rgba(251, 249, 246, 0.86) !important;
+  backdrop-filter: blur(6px) !important;
+}
+
+#fc-root .fc-game-overlay[hidden] {
+  display: none !important;
+}
+
+#fc-root.is-dark .fc-game-overlay {
+  background: rgba(22, 24, 28, 0.88) !important;
+}
+
+#fc-root .fc-game-kicker {
+  margin: 0 !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-game-overlay .fc-lede {
+  max-width: 24ch !important;
+  text-align: center !important;
+}
+
+#fc-root .fc-game-btn {
+  flex: none !important;
+  min-width: 150px !important;
+  margin-top: 6px !important;
+  padding: 11px 20px !important;
+}
+
+#fc-root .fc-game-keys {
+  margin: 2px 0 0 !important;
+  font-size: 10px !important;
+  line-height: 1.5 !important;
+  color: var(--fc-muted) !important;
+}
+
+#fc-root .fc-game-keys kbd {
+  display: inline-block !important;
+  padding: 1px 5px !important;
+  margin: 0 1px !important;
+  border-radius: 4px !important;
+  background: var(--fc-lavender-2) !important;
+  border: 1px solid var(--fc-line-strong) !important;
+  font-family: inherit !important;
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  color: var(--fc-ink-2) !important;
+}
+
+/* Visually hidden, but announced to screen readers. */
+#fc-root .fc-game-live {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Shares toolbar: search + actions */
+#fc-root .fc-bar {
+  margin-bottom: 14px !important;
+}
+
+#fc-root .fc-search {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 12px !important;
+  margin-bottom: 8px !important;
+  border-radius: 999px !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line) !important;
+  transition: border-color 0.2s var(--fc-ease), box-shadow 0.2s var(--fc-ease) !important;
+}
+
+#fc-root .fc-search:focus-within {
+  border-color: var(--fc-slate-soft) !important;
+  box-shadow: 0 0 0 3px rgba(91, 115, 150, 0.13) !important;
+}
+
+#fc-root .fc-search svg {
+  width: 15px !important;
+  height: 15px !important;
+  flex: none !important;
+  color: var(--fc-muted) !important;
+}
+
+#fc-root .fc-search-input {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  padding: 9px 0 !important;
+  font-size: 12.5px !important;
+  line-height: 1.4 !important;
+  color: var(--fc-ink) !important;
+  cursor: text !important;
+  appearance: none !important;
+}
+
+#fc-root .fc-search-input::placeholder {
+  color: var(--fc-muted) !important;
+  opacity: 1 !important;
+}
+
+#fc-root .fc-search-input:focus {
+  outline: none !important;
+}
+
+#fc-root .fc-search-input::-webkit-search-cancel-button {
+  appearance: none !important;
+}
+
+#fc-root .fc-bar-row {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+#fc-root .fc-mini {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 8px 4px !important;
+  border-radius: var(--fc-radius-sm) !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line) !important;
+  box-shadow: var(--fc-shadow-sm) !important;
+  transition: border-color 0.18s var(--fc-ease), color 0.18s var(--fc-ease),
+    background 0.18s var(--fc-ease) !important;
+}
+
+#fc-root .fc-mini svg {
+  width: 15px !important;
+  height: 15px !important;
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-mini span {
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0.01em !important;
+  text-align: center !important;
+  color: var(--fc-ink-2) !important;
+}
+
+#fc-root .fc-mini:hover {
+  border-color: var(--fc-slate-soft) !important;
+  background: var(--fc-lavender) !important;
+}
+
+#fc-root .fc-mini--danger svg,
+#fc-root .fc-mini--danger span {
+  color: #a8675d !important;
+}
+
+#fc-root .fc-mini--danger:hover {
+  border-color: #c08a80 !important;
+  background: rgba(168, 103, 93, 0.08) !important;
+}
+
+#fc-root .fc-mini:focus-visible {
+  outline: 2px solid var(--fc-slate) !important;
+  outline-offset: 2px !important;
+}
+
+/* Saved shares: thumbnail + remove control */
+#fc-root .fc-file--img {
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: var(--fc-lavender-2) !important;
+}
+
+#fc-root .fc-file--img img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+#fc-root .fc-row-x {
+  width: 24px !important;
+  height: 24px !important;
+  flex: none !important;
+  padding: 7px !important;
+  border-radius: 50% !important;
+  color: var(--fc-muted) !important;
+  opacity: 0 !important;
+  transition: opacity 0.18s var(--fc-ease), background 0.18s var(--fc-ease),
+    color 0.18s var(--fc-ease) !important;
+}
+
+#fc-root .fc-row:hover .fc-row-x,
+#fc-root .fc-row-x:focus-visible {
+  opacity: 1 !important;
+}
+
+#fc-root .fc-row-x:hover {
+  background: var(--fc-lavender-2) !important;
+  color: var(--fc-ink) !important;
+}
+
+/* Touch devices have no hover, so keep the control permanently visible. */
+@media (hover: none) {
+  #fc-root .fc-row-x {
+    opacity: 1 !important;
+  }
+}
+
+#fc-root .fc-empty {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  padding: 30px 18px !important;
+  border-radius: var(--fc-radius-md) !important;
+  border: 1.5px dashed var(--fc-line-strong) !important;
+  background: var(--fc-surface) !important;
+}
+
+#fc-root .fc-empty-ic {
+  display: grid !important;
+  place-items: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  padding: 10px !important;
+  margin-bottom: 12px !important;
+  border-radius: 12px !important;
+  background: var(--fc-lavender) !important;
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-empty-title {
+  margin: 0 !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.01em !important;
+  color: var(--fc-ink) !important;
+}
+
+#fc-root .fc-empty-sub {
+  margin: 5px 0 0 !important;
+  font-size: 11.5px !important;
+  line-height: 1.45 !important;
+  color: var(--fc-muted) !important;
+  max-width: 26ch !important;
+}
+
+/* --------------------------------------------------------------------------
+   Countdown timer (Tools tab)
+   -------------------------------------------------------------------------- */
+#fc-root .fc-timer {
+  padding: 16px !important;
+  margin-bottom: 16px !important;
+  border-radius: var(--fc-radius-md) !important;
+  background: linear-gradient(160deg, var(--fc-slate-wash) 0%, var(--fc-lavender) 100%) !important;
+  border: 1px solid var(--fc-line) !important;
+  box-shadow: var(--fc-shadow-sm) !important;
+}
+
+#fc-root .fc-timer-head {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-bottom: 14px !important;
+}
+
+#fc-root .fc-timer-ic {
+  display: grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  flex: none !important;
+  padding: 8px !important;
+  border-radius: 10px !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line) !important;
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-timer-title {
+  margin: 0 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  letter-spacing: -0.01em !important;
+  color: var(--fc-ink) !important;
+}
+
+#fc-root .fc-timer-sub {
+  margin: 1px 0 0 !important;
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+  color: var(--fc-muted) !important;
+}
+
+#fc-root .fc-timer-clock {
+  margin: 0 0 12px !important;
+  font-size: 42px !important;
+  font-weight: 300 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.03em !important;
+  font-variant-numeric: tabular-nums !important;
+  text-align: center !important;
+  color: var(--fc-ink) !important;
+  transition: color 0.24s var(--fc-ease) !important;
+}
+
+#fc-root .fc-timer.is-running .fc-timer-clock {
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-timer.is-done .fc-timer-clock {
+  color: #b4695f !important;
+}
+
+#fc-root .fc-timer-bar {
+  height: 4px !important;
+  overflow: hidden !important;
+  border-radius: 99px !important;
+  background: rgba(91, 115, 150, 0.16) !important;
+  margin-bottom: 14px !important;
+}
+
+#fc-root .fc-timer-fill {
+  display: block !important;
+  height: 100% !important;
+  width: 100% !important;
+  border-radius: 99px !important;
+  background: linear-gradient(90deg, var(--fc-slate) 0%, var(--fc-slate-deep) 100%) !important;
+  transition: width 1s linear !important;
+}
+
+#fc-root .fc-timer.is-done .fc-timer-fill {
+  background: #b4695f !important;
+}
+
+#fc-root .fc-timer-presets {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  margin-bottom: 12px !important;
+}
+
+#fc-root .fc-tchip {
+  flex: 1 1 auto !important;
+  min-width: 42px !important;
+  padding: 7px 8px !important;
+  border-radius: 999px !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line) !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  text-align: center !important;
+  color: var(--fc-ink-2) !important;
+  transition: background 0.18s var(--fc-ease), color 0.18s var(--fc-ease),
+    border-color 0.18s var(--fc-ease) !important;
+}
+
+#fc-root .fc-tchip:hover {
+  border-color: var(--fc-slate-soft) !important;
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-tchip.is-active {
+  background: var(--fc-slate) !important;
+  border-color: var(--fc-accent) !important;
+  color: #fff !important;
+}
+
+#fc-root .fc-timer-actions {
+  display: flex !important;
+  gap: 8px !important;
+}
+
+#fc-root .fc-btn {
+  flex: 1 1 auto !important;
+  padding: 10px 12px !important;
+  border-radius: var(--fc-radius-sm) !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line-strong) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  text-align: center !important;
+  color: var(--fc-ink-2) !important;
+  transition: background 0.18s var(--fc-ease), color 0.18s var(--fc-ease) !important;
+}
+
+#fc-root .fc-btn:hover {
+  background: var(--fc-lavender) !important;
+  color: var(--fc-ink) !important;
+}
+
+#fc-root .fc-btn--primary {
+  background: linear-gradient(145deg, var(--fc-slate) 0%, var(--fc-slate-deep) 100%) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+
+#fc-root .fc-btn--primary:hover {
+  filter: brightness(1.08) !important;
+  color: #fff !important;
+}
+
+/* --------------------------------------------------------------------------
+   Video link previews
+   -------------------------------------------------------------------------- */
+
+/* Composer attachment preview */
+#fc-root .fc-attach {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-bottom: 10px !important;
+  padding: 8px !important;
+  border-radius: var(--fc-radius-md) !important;
+  background: var(--fc-lavender) !important;
+  border: 1px solid var(--fc-line) !important;
+  animation: fc-attach-in 0.24s var(--fc-ease) both !important;
+}
+
+@keyframes fc-attach-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+#fc-root .fc-attach[hidden] {
+  display: none !important;
+}
+
+#fc-root .fc-attach-thumb {
+  position: relative !important;
+  width: 74px !important;
+  height: 44px !important;
+  flex: none !important;
+  overflow: hidden !important;
+  border-radius: 8px !important;
+  background: linear-gradient(150deg, #8ba0bd 0%, #4a5f7d 100%) !important;
+}
+
+#fc-root .fc-attach-thumb img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+#fc-root .fc-attach-thumb.is-placeholder {
+  background: linear-gradient(150deg, #8ba0bd 0%, #4a5f7d 100%) !important;
+}
+
+#fc-root .fc-attach-badge {
+  position: absolute !important;
+  left: 4px !important;
+  bottom: 4px !important;
+  padding: 1px 5px !important;
+  border-radius: 4px !important;
+  background: rgba(20, 22, 28, 0.72) !important;
+  font-size: 8.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  color: #fff !important;
+}
+
+#fc-root .fc-attach-meta {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+#fc-root .fc-attach-title {
+  margin: 0 !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  color: var(--fc-ink) !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+#fc-root .fc-attach-sub {
+  margin: 2px 0 0 !important;
+  font-size: 10.5px !important;
+  line-height: 1.35 !important;
+  color: var(--fc-muted) !important;
+}
+
+#fc-root .fc-attach-x {
+  width: 24px !important;
+  height: 24px !important;
+  flex: none !important;
+  padding: 7px !important;
+  border-radius: 50% !important;
+  color: var(--fc-muted) !important;
+  transition: background 0.18s var(--fc-ease), color 0.18s var(--fc-ease) !important;
+}
+
+#fc-root .fc-attach-x:hover {
+  background: var(--fc-lavender-2) !important;
+  color: var(--fc-ink) !important;
+}
+
+#fc-root .fc-attach.is-busy {
+  opacity: 0.6 !important;
+}
+
+/* Media card inside a sent message */
+#fc-root .fc-msg.has-media {
+  padding: 0 !important;
+  overflow: hidden !important;
+  max-width: 264px !important;
+}
+
+#fc-root .fc-msg-cap {
+  display: block !important;
+  padding: 9px 13px !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+
+#fc-root .fc-msg--bot.has-media .fc-msg-cap {
+  color: var(--fc-ink-2) !important;
+}
+
+#fc-root .fc-mcard {
+  overflow: hidden !important;
+  background: var(--fc-lavender) !important;
+}
+
+#fc-root .fc-mcard-thumb {
+  position: relative !important;
+  aspect-ratio: 16 / 9 !important;
+  background: linear-gradient(150deg, #8ba0bd 0%, #4a5f7d 100%) !important;
+}
+
+#fc-root .fc-mcard-thumb img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+#fc-root .fc-mcard-play {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 10px !important;
+  transform: translate(-50%, -50%) !important;
+  border-radius: 50% !important;
+  background: rgba(20, 22, 28, 0.62) !important;
+  backdrop-filter: blur(2px) !important;
+  color: #fff !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+#fc-root .fc-mcard-body {
+  padding: 9px 12px 11px !important;
+}
+
+#fc-root .fc-mcard-badge {
+  margin: 0 0 2px !important;
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-mcard-title {
+  margin: 0 !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.01em !important;
+  color: var(--fc-ink) !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+#fc-root .fc-msg--user .fc-mcard {
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+
+#fc-root .fc-msg--user .fc-mcard-title {
+  color: #fff !important;
+}
+
+#fc-root .fc-msg--user .fc-mcard-badge {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+#fc-root .fc-msg--user .fc-mcard-play {
+  background: rgba(20, 22, 28, 0.45) !important;
+}
+
+/* Drop target */
+#fc-root .fc-drop {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 5 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 20px !important;
+  background: var(--fc-scrim) !important;
+  backdrop-filter: blur(3px) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.2s var(--fc-ease) !important;
+}
+
+#fc-root .fc-panel.is-dragover .fc-drop {
+  opacity: 1 !important;
+}
+
+#fc-root .fc-drop-inner {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 22px 26px !important;
+  border-radius: var(--fc-radius-md) !important;
+  border: 1.5px dashed var(--fc-slate-soft) !important;
+  background: var(--fc-surface) !important;
+  text-align: center !important;
+}
+
+#fc-root .fc-drop-inner svg {
+  width: 26px !important;
+  height: 26px !important;
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-drop-inner b {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+  color: var(--fc-ink) !important;
+}
+
+#fc-root .fc-drop-inner small {
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  color: var(--fc-muted) !important;
+}
+
+#fc-root .fc-panel.is-dragover {
+  border-color: var(--fc-slate-soft) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Media tiles
+   -------------------------------------------------------------------------- */
+#fc-root .fc-tiles {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+#fc-root .fc-tile {
+  position: relative !important;
+  isolation: isolate !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  aspect-ratio: 4 / 3 !important;
+  overflow: hidden !important;
+  border-radius: var(--fc-radius-md) !important;
+  box-shadow: var(--fc-shadow-sm) !important;
+}
+
+#fc-root .fc-tile-sheen {
+  position: absolute !important;
+  inset: 0 !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(0deg, rgba(20, 22, 28, 0.52) 0%, rgba(20, 22, 28, 0) 58%) !important;
+}
+
+#fc-root .fc-tile-body {
+  position: relative !important;
+  width: 100% !important;
+  padding: 12px !important;
+}
+
+#fc-root .fc-tile-count {
+  margin: 0 0 3px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+#fc-root .fc-tile-title {
+  margin: 0 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.01em !important;
+  color: #fff !important;
+}
+
+#fc-root .fc-tile-meta {
+  margin: 2px 0 0 !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+/* Cinematic Philippine-inspired palettes */
+#fc-root .fc-tile--lagoon {
+  background: linear-gradient(160deg, #9fd0d8 0%, #4d8f9c 52%, #2c5f6e 100%) !important;
+}
+#fc-root .fc-tile--hills {
+  background: linear-gradient(160deg, #a8b98c 0%, #6d8352 50%, #40522f 100%) !important;
+}
+#fc-root .fc-tile--terrace {
+  background: linear-gradient(160deg, #b9cf9a 0%, #7d9c5c 52%, #4c6535 100%) !important;
+}
+#fc-root .fc-tile--sand {
+  background: linear-gradient(160deg, #f0dcb8 0%, #d3ab74 50%, #a97b47 100%) !important;
+}
+#fc-root .fc-tile--dusk {
+  background: linear-gradient(160deg, #b3a7c4 0%, #7c7396 50%, #4a4463 100%) !important;
+}
+#fc-root .fc-tile--reef {
+  background: linear-gradient(160deg, #e8b6ac 0%, #c07c73 50%, #8b4a45 100%) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Rows (groups / shares)
+   -------------------------------------------------------------------------- */
+#fc-root .fc-rows {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+#fc-root .fc-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 12px !important;
+  border-radius: var(--fc-radius-md) !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line) !important;
+  box-shadow: var(--fc-shadow-sm) !important;
+  transition: border-color 0.18s var(--fc-ease), transform 0.18s var(--fc-ease),
+    box-shadow 0.18s var(--fc-ease) !important;
+}
+
+#fc-root .fc-row--tap:hover {
+  border-color: var(--fc-slate-soft) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--fc-shadow-md) !important;
+}
+
+#fc-root .fc-avatar {
+  display: grid !important;
+  place-items: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  flex: none !important;
+  border-radius: 12px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.02em !important;
+  color: #fff !important;
+}
+
+#fc-root .fc-avatar--a {
+  background: linear-gradient(145deg, #6d88ad, #3f5473) !important;
+}
+#fc-root .fc-avatar--b {
+  background: linear-gradient(145deg, #93a6c2, #5b7396) !important;
+}
+#fc-root .fc-avatar--c {
+  background: linear-gradient(145deg, #8f9bb5, #59637f) !important;
+}
+#fc-root .fc-avatar--d {
+  background: linear-gradient(145deg, #7b8bab, #46536f) !important;
+}
+
+#fc-root .fc-file {
+  display: grid !important;
+  place-items: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  flex: none !important;
+  padding: 10px !important;
+  border-radius: 12px !important;
+  background: var(--fc-slate-wash) !important;
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-row-main {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+#fc-root .fc-row-top {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+#fc-root .fc-row-title {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.01em !important;
+  color: var(--fc-ink) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#fc-root .fc-row-sub {
+  flex: none !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  color: var(--fc-muted) !important;
+  white-space: nowrap !important;
+}
+
+#fc-root .fc-row-msg {
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  color: var(--fc-muted) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#fc-root .fc-pill {
+  flex: none !important;
+  padding: 7px 13px !important;
+  border-radius: 999px !important;
+  background: var(--fc-slate-wash) !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  color: var(--fc-accent) !important;
+  transition: background 0.18s var(--fc-ease), color 0.18s var(--fc-ease) !important;
+}
+
+#fc-root .fc-pill:hover {
+  background: var(--fc-slate) !important;
+  color: #fff !important;
+}
+
+#fc-root .fc-pill:focus-visible {
+  outline: 2px solid var(--fc-slate) !important;
+  outline-offset: 2px !important;
+}
+
+#fc-root .fc-chev {
+  width: 16px !important;
+  height: 16px !important;
+  flex: none !important;
+  color: var(--fc-slate-soft) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Tools
+   -------------------------------------------------------------------------- */
+#fc-root .fc-tools {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+#fc-root .fc-tool {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  padding: 14px !important;
+  border-radius: var(--fc-radius-md) !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line) !important;
+  box-shadow: var(--fc-shadow-sm) !important;
+  transition: border-color 0.18s var(--fc-ease), transform 0.18s var(--fc-ease),
+    box-shadow 0.18s var(--fc-ease) !important;
+}
+
+#fc-root .fc-tool:hover {
+  border-color: var(--fc-slate-soft) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--fc-shadow-md) !important;
+}
+
+#fc-root .fc-tool:focus-visible {
+  outline: 2px solid var(--fc-slate) !important;
+  outline-offset: 2px !important;
+}
+
+#fc-root .fc-tool-ic {
+  display: grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  flex: none !important;
+  padding: 8px !important;
+  border-radius: 10px !important;
+  background: var(--fc-lavender) !important;
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-tool-text {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+#fc-root .fc-tool-label {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.01em !important;
+  color: var(--fc-ink) !important;
+}
+
+#fc-root .fc-tool-desc {
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+  color: var(--fc-muted) !important;
+}
+
+/* Switch ------------------------------------------------------------------- */
+#fc-root .fc-switch {
+  position: relative !important;
+  width: 34px !important;
+  height: 20px !important;
+  flex: none !important;
+  margin-top: auto !important;
+  border-radius: 999px !important;
+  background: var(--fc-lavender-2) !important;
+  transition: background 0.22s var(--fc-ease) !important;
+}
+
+#fc-root .fc-switch.is-on {
+  background: var(--fc-slate) !important;
+}
+
+#fc-root .fc-switch-knob {
+  position: absolute !important;
+  top: 3px !important;
+  left: 3px !important;
+  width: 14px !important;
+  height: 14px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  box-shadow: 0 1px 3px rgba(35, 37, 43, 0.24) !important;
+  transition: transform 0.22s var(--fc-ease) !important;
+}
+
+#fc-root .fc-switch.is-on .fc-switch-knob {
+  transform: translateX(14px) !important;
+}
+
+#fc-root .fc-run {
+  margin-top: auto !important;
+  padding: 5px 11px !important;
+  border-radius: 999px !important;
+  background: var(--fc-slate-wash) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  color: var(--fc-accent) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Toast
+   -------------------------------------------------------------------------- */
+#fc-root .fc-toast {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: 18px !important;
+  z-index: 2 !important;
+  padding: 9px 15px !important;
+  border-radius: 999px !important;
+  background: var(--fc-toast-bg) !important;
+  box-shadow: var(--fc-shadow-md) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: var(--fc-toast-fg) !important;
+  white-space: nowrap !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translate(-50%, 10px) !important;
+  transition: opacity 0.24s var(--fc-ease), transform 0.24s var(--fc-ease) !important;
+}
+
+#fc-root .fc-toast.is-visible {
+  opacity: 1 !important;
+  transform: translate(-50%, 0) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Compact mode
+   -------------------------------------------------------------------------- */
+#fc-root .fc-panel.is-compact {
+  --fc-panel-h: 500px;
+  height: 500px !important;
+}
+
+#fc-root .is-compact .fc-view-scroll {
+  padding: 16px 14px 18px !important;
+}
+
+#fc-root .is-compact .fc-display {
+  font-size: 24px !important;
+}
+
+#fc-root .is-compact .fc-row {
+  padding: 9px !important;
+}
+
+#fc-root .is-compact .fc-tool {
+  padding: 11px !important;
+}
+
+#fc-root .is-compact .fc-tiles {
+  gap: 9px !important;
+}
+
+/* --------------------------------------------------------------------------
+   Dark theme
+   The class is applied by JS from the Auto/Light/Dark preference, so the
+   system setting and the manual override share one definition.
+   -------------------------------------------------------------------------- */
+#fc-root.is-dark {
+  --fc-canvas: #16181c;
+  --fc-surface: #1d2026;
+  --fc-lavender: #22262e;
+  --fc-lavender-2: #2c313a;
+  --fc-slate-wash: #262c36;
+  --fc-slate: #8ba3c6;
+  --fc-slate-soft: #7d90ad;
+  --fc-accent: #a3b8d6;
+  --fc-ink: #f3f2f0;
+  --fc-ink-2: #d8dae0;
+  --fc-muted: #9ba1ae;
+  --fc-line: #2e333c;
+  --fc-line-strong: #414854;
+  --fc-scrim: rgba(22, 24, 28, 0.94);
+  --fc-toast-bg: #f3f2f0;
+  --fc-toast-fg: #16181c;
+  --fc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --fc-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45), 0 12px 28px rgba(0, 0, 0, 0.4);
+  --fc-shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55), 0 30px 64px rgba(0, 0, 0, 0.45);
+}
+
+/* Gradients keep the deeper navy so white icons stay legible in both themes. */
+#fc-root.is-dark .fc-fab,
+#fc-root.is-dark .fc-mark,
+#fc-root.is-dark .fc-send,
+#fc-root.is-dark .fc-btn--primary {
+  background: linear-gradient(145deg, #5d7699 0%, #3f5473 100%) !important;
+}
+
+/* Media tiles are photographic; dim only slightly so they stay recognisable. */
+#fc-root.is-dark .fc-tile {
+  filter: brightness(0.82) saturate(0.92);
+}
+
+/* --------------------------------------------------------------------------
+   Appearance segmented control
+   -------------------------------------------------------------------------- */
+#fc-root .fc-theme {
+  padding: 14px 14px 15px !important;
+  margin-bottom: 16px !important;
+  border-radius: var(--fc-radius-md) !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line) !important;
+  box-shadow: var(--fc-shadow-sm) !important;
+}
+
+#fc-root .fc-theme-label {
+  margin: 0 0 9px !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: var(--fc-accent) !important;
+}
+
+#fc-root .fc-seg {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 3px !important;
+  padding: 3px !important;
+  border-radius: 999px !important;
+  background: var(--fc-lavender) !important;
+  border: 1px solid var(--fc-line) !important;
+}
+
+#fc-root .fc-seg-btn {
+  padding: 7px 6px !important;
+  border-radius: 999px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  text-align: center !important;
+  color: var(--fc-muted) !important;
+  transition: background 0.2s var(--fc-ease), color 0.2s var(--fc-ease),
+    box-shadow 0.2s var(--fc-ease) !important;
+}
+
+#fc-root .fc-seg-btn:hover {
+  color: var(--fc-ink) !important;
+}
+
+#fc-root .fc-seg-btn.is-active {
+  background: var(--fc-surface) !important;
+  color: var(--fc-accent) !important;
+  box-shadow: var(--fc-shadow-sm) !important;
+}
+
+#fc-root .fc-seg-btn:focus-visible {
+  outline: 2px solid var(--fc-slate) !important;
+  outline-offset: 1px !important;
+}
+
+/* --------------------------------------------------------------------------
+   Launcher countdown ring + badge
+   -------------------------------------------------------------------------- */
+#fc-root .fc-fab-wrap {
+  position: relative !important;
+  display: block !important;
+  width: 56px !important;
+  height: 56px !important;
+}
+
+#fc-root .fc-ring {
+  position: absolute !important;
+  inset: -4px !important;
+  width: 64px !important;
+  height: 64px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: rotate(-90deg) !important;
+  transition: opacity 0.24s var(--fc-ease) !important;
+}
+
+#fc-root .fc-fab-wrap.is-timing .fc-ring {
+  opacity: 1 !important;
+}
+
+#fc-root .fc-ring circle {
+  fill: none !important;
+  stroke-width: 2.5 !important;
+}
+
+#fc-root .fc-ring-track {
+  stroke: var(--fc-slate-soft) !important;
+  opacity: 0.28 !important;
+}
+
+#fc-root .fc-ring-bar {
+  stroke: var(--fc-slate) !important;
+  stroke-linecap: round !important;
+  transition: stroke-dashoffset 1s linear !important;
+}
+
+#fc-root .fc-fab-badge {
+  position: absolute !important;
+  top: -6px !important;
+  right: -8px !important;
+  min-width: 34px !important;
+  padding: 2px 5px !important;
+  border-radius: 999px !important;
+  background: var(--fc-toast-bg) !important;
+  color: var(--fc-toast-fg) !important;
+  border: 1px solid var(--fc-line) !important;
+  box-shadow: var(--fc-shadow-sm) !important;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+  font-variant-numeric: tabular-nums !important;
+  pointer-events: none !important;
+}
+
+#fc-root .fc-fab-badge[hidden] {
+  display: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   High contrast
+   -------------------------------------------------------------------------- */
+#fc-root.is-contrast {
+  --fc-canvas: #ffffff;
+  --fc-lavender: #eceef3;
+  --fc-lavender-2: #dfe3ec;
+  --fc-ink: #101216;
+  --fc-ink-2: #262a33;
+  --fc-muted: #545b69;
+  --fc-line: #c8cdd8;
+  --fc-line-strong: #9aa2b2;
+}
+
+#fc-root.is-contrast .fc-row,
+#fc-root.is-contrast .fc-tool,
+#fc-root.is-contrast .fc-msg--bot,
+#fc-root.is-contrast .fc-chip {
+  border-width: 1.5px !important;
+}
+
+/* Dark and high contrast are independent switches and can be on together, so
+   the pair needs its own values. Declared last and at the highest specificity
+   so it is not shadowed by either block on its own. */
+#fc-root.is-dark.is-contrast {
+  --fc-canvas: #101216;
+  --fc-surface: #171a1f;
+  --fc-lavender: #1c2026;
+  --fc-lavender-2: #262b33;
+  --fc-slate-wash: #21262e;
+  --fc-ink: #ffffff;
+  --fc-ink-2: #eef0f3;
+  --fc-muted: #c2c7d1;
+  --fc-line: #6d7482;
+  --fc-line-strong: #9aa2b2;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  #fc-root {
+    right: 16px !important;
+    bottom: 16px !important;
+  }
+
+  #fc-root .fc-panel {
+    position: fixed !important;
+    left: 12px !important;
+    right: 12px !important;
+    bottom: 84px !important;
+    width: auto !important;
+    height: min(72vh, 560px) !important;
+    max-height: none !important;
+    transform-origin: bottom center !important;
+  }
+
+  #fc-root .fc-panel.is-compact {
+    height: min(58vh, 420px) !important;
+  }
+
+  #fc-root .fc-display {
+    font-size: 27px !important;
+  }
+
+  #fc-root .fc-live {
+    display: none !important;
+  }
+}
+
+@media (max-width: 360px) {
+  #fc-root .fc-tab-label {
+    font-size: 9.5px !important;
+  }
+
+  #fc-root .fc-tools {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-height: 620px) {
+  #fc-root .fc-panel {
+    height: calc(100vh - 120px) !important;
+    max-height: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Motion preferences
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  #fc-root *,
+  #fc-root *::before,
+  #fc-root *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Social shortcuts (Tools tab)
+   -------------------------------------------------------------------------- */
+#fc-root .fc-social {
+  padding: 14px 14px 15px !important;
+  margin-bottom: 16px !important;
+  border-radius: var(--fc-radius-md) !important;
+  background: var(--fc-surface) !important;
+  border: 1px solid var(--fc-line) !important;
+  box-shadow: var(--fc-shadow-sm) !important;
+}
+
+#fc-root .fc-social-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+#fc-root .fc-social-btn {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 10px 4px !important;
+  border-radius: var(--fc-radius-sm) !important;
+  background: var(--fc-lavender) !important;
+  border: 1px solid var(--fc-line) !important;
+  transition: border-color 0.18s var(--fc-ease), transform 0.18s var(--fc-ease),
+    background 0.18s var(--fc-ease) !important;
+}
+
+#fc-root .fc-social-btn:hover {
+  border-color: var(--fc-slate-soft) !important;
+  background: var(--fc-slate-wash) !important;
+  transform: translateY(-1px) !important;
+}
+
+#fc-root .fc-social-btn:focus-visible {
+  outline: 2px solid var(--fc-slate) !important;
+  outline-offset: 2px !important;
+}
+
+/* Fixed navy so the white monogram stays legible in dark mode too. */
+#fc-root .fc-social-mark {
+  display: grid !important;
+  place-items: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 11px !important;
+  background: linear-gradient(145deg, #5d7699, #3f5473) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.02em !important;
+  color: #fff !important;
+}
+
+#fc-root .fc-social-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  color: var(--fc-ink-2) !important;
+}
